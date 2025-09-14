@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fund Wallet - Binvesto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white dark:bg-gray-900 shadow-lg p-6 flex flex-col">
+        <h1 class="text-2xl font-bold mb-8 text-blue-600">Binvesto</h1>
+        <nav class="flex flex-col space-y-4">
+            <a href="/frontend/dashboard.html" class="px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800">📊
+                Dashboard</a>
+            <a href="/frontend/invest.html" class="px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800">💰
+                Invest</a>
+            <a href="/frontend/wallet.html" class="px-3 py-2 rounded bg-blue-600 text-white">👛 Wallet</a>
+            <a href="#" class="px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800">👤 Profile</a>
+            <a href="#" class="px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800">⚙️ Settings</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 space-y-6">
+        <h2 class="text-2xl font-bold">Wallet</h2>
+
+        <!-- Wallet Balance -->
+        <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
+            <h3 class="text-lg font-semibold">Current Balance</h3>
+            <p id="walletBalance" class="text-3xl font-bold text-blue-600">$0</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Fund Wallet Form -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded shadow ">
+                <h3 class="text-lg font-semibold mb-4">Add Funds</h3>
+                <form id="fundForm" class="space-y-4">
+                    <div>
+                        <label for="amount" class="block mb-1">Amount ($)</label>
+                        <input type="number" id="amount" required
+                            class="w-full px-3 py-2 border rounded dark:bg-gray-700">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
+                        Add Money
+                    </button>
+                </form>
+            </div>
+
+            <!-- Withdraw Funds Form -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
+                <h3 class="text-lg font-semibold mb-4">Withdraw Funds</h3>
+                <form id="withdrawForm" class="space-y-4">
+                    <div>
+                        <label for="withdrawAmount" class="block mb-1">Amount ($)</label>
+                        <input type="number" id="withdrawAmount" required
+                            class="w-full px-3 py-2 border rounded dark:bg-gray-700">
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded">
+                        Withdraw Money
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="./assests/script.js"></script>
+    <script>
+        // Reusable custom alert
+        function customAlert(message, type = "info") {
+            const alertBox = document.createElement("div");
+            alertBox.className = `fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white z-50
+      ${type === "success" ? "bg-green-600" : ""}
+      ${type === "error" ? "bg-red-600" : ""}
+      ${type === "info" ? "bg-blue-600" : ""}`;
+
+            alertBox.textContent = message;
+
+            document.body.appendChild(alertBox);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                alertBox.remove();
+            }, 3000);
+        }
+
+        function loadWallet() {
+            return parseFloat(localStorage.getItem("walletBalance")) || 0;
+        }
+
+        function loadTotalInvestment() {
+            return parseFloat(localStorage.getItem("totalInvested")) || 0;
+        }
+
+        function saveWallet(amount) {
+            localStorage.setItem("walletBalance", amount);
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById("walletBalance").textContent = `$${loadWallet()}`;
+        }
+
+        // Add Funds
+        document.getElementById("fundForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById("amount").value);
+            if (amount > 0) {
+                const newBalance = loadWallet() + amount;
+                saveWallet(newBalance);
+                updateBalanceDisplay();
+                customAlert(`Successfully added $${amount} to your wallet!`, "success");
+                document.getElementById("fundForm").reset();
+            } else {
+                customAlert("Enter a valid amount!", "info");
+            }
+        });
+
+        // Withdraw Funds
+        document.getElementById("withdrawForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const amount = parseFloat(document.getElementById("withdrawAmount").value);
+            const currentBalance = loadWallet();
+            const totalInvested = loadTotalInvestment(); // already stored in localStorage
+            const availableToWithdraw = currentBalance - totalInvested;
+
+            if (amount > 0 && amount <= availableToWithdraw) {
+                const newBalance = currentBalance - amount;
+                saveWallet(newBalance);
+                updateBalanceDisplay();
+                customAlert(`Successfully withdrew $${amount} from your wallet!`, "success");
+                document.getElementById("withdrawForm").reset();
+            } else if (amount > availableToWithdraw) {
+                customAlert(
+                    `You can only withdraw up to $${availableToWithdraw}. The rest is tied up in investments.`, "info"
+                );
+            } else {
+                customAlert("Enter a valid amount!", "info");
+            }
+        });
+
+
+
+        // Init
+        updateBalanceDisplay();
+    </script>
+</body>
+
+</html>

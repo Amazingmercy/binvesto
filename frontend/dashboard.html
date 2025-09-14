@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binvesto Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="./assests/style.css">
+</head>
+
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white dark:bg-gray-900 shadow-lg p-6 flex flex-col">
+        <a href="/frontend/index.html" class="text-2xl font-bold mb-8 text-blue-600">Binvesto </a>
+        <nav class="flex flex-col space-y-4">
+            <a href="/frontend/dashboard.html" class="px-3 py-2 rounded bg-blue-600 text-white">📊 Dashboard</a>
+            <a href="/frontend/invest.html" class="px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800">💰
+                Invest</a>
+            <a href="/frontend/wallet.html" class="px-3 py-2  dark:hover:bg-gray-800">👛 Wallet</a>
+            <a href="#" class="px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800">👤 Profile</a>
+            <a href="#" class="px-3 py-2 rounded hover:bg-blue-100 dark:hover:bg-gray-800">⚙️ Settings</a>
+           <a href="/frontend/login.html"  class="flex items-center gap-2 text-red-500 hover:text-red-700">
+  <!-- logout icon (heroicons) -->
+  <svg xmlns="http://www.w3.org/2000/svg" 
+       fill="none" viewBox="0 0 24 24" stroke="currentColor" 
+       class="w-5 h-5">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 11-4 0v-1m0-8V7a2 2 0 114 0v1" />
+  </svg>
+  Logout
+</a>
+        </nav>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-10">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
+                <h2 class="text-lg font-semibold">Balance</h2>
+                <p class="text-2xl" id="balance">$0</p>
+            </div>
+            <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
+                <h2 class="text-lg font-semibold">Total Invested</h2>
+                <p class="text-2xl" id="invested">$0</p>
+            </div>
+            <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
+                <h2 class="text-lg font-semibold">ROI</h2>
+                <p class="text-2xl" id="roi">0%</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
+                <h2 class="text-lg font-semibold mb-2">Portfolio Allocation</h2>
+                <canvas id="allocationChart" height="200"></canvas>
+            </div>
+            <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
+                <h2 class="text-lg font-semibold mb-2">Performance</h2>
+                <canvas id="performanceChart" height="200"></canvas>
+            </div>
+            <div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
+                <h2 class="text-lg font-semibold mb-2">Investment Distribution</h2>
+                <canvas id="barChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Investments List -->
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Your Investments</h2>
+            <ul id="investmentList" class="space-y-2 text-gray-700 dark:text-gray-200"></ul>
+        </div>
+    </main>
+
+
+
+    <script>
+
+        function loadDashboard() {
+            const investments = JSON.parse(localStorage.getItem("investments")) || [];
+
+            // Balance & Totals
+            let balance = parseFloat(localStorage.getItem("walletBalance")) || 0;
+            const totalInvested = investments.reduce((sum, inv) => sum + inv.amount, 0);
+            const roi = totalInvested > 0 ? ((totalInvested * 0.1) / totalInvested * 100).toFixed(1) : 0; // fake ROI
+
+            document.getElementById("balance").textContent = `$${(balance - totalInvested).toLocaleString()}`;
+            document.getElementById("invested").textContent = `$${totalInvested.toLocaleString()}`;
+            document.getElementById("roi").textContent = `${roi}%`;
+
+            // Investments list
+            const list = document.getElementById("investmentList");
+            list.innerHTML = investments.length
+                ? ""
+                : "<li class='text-gray-500 dark:text-gray-400 text-center py-4 italic'>No investments yet</li>";
+
+            investments.forEach(inv => {
+                const li = document.createElement("li");
+                li.className = "p-4 border rounded-lg bg-white dark:bg-gray-700 shadow-sm hover:shadow-md transition flex justify-between items-center";
+
+                li.innerHTML = `
+    <div>
+      <p class="font-semibold text-blue-600 dark:text-blue-400">${inv.opportunity}</p>
+      <p class="text-sm text-gray-500 dark:text-gray-300">Invested on ${inv.date}</p>
+    </div>
+    <div class="text-right">
+      <p class="text-lg font-bold text-green-600 dark:text-green-400">$${inv.amount.toLocaleString()}</p>
+    </div>
+  `;
+
+                list.appendChild(li);
+            });
+
+
+            // Charts
+            if (investments.length > 0) {
+                // Allocation by opportunity
+                const allocationMap = {};
+                investments.forEach(inv => {
+                    allocationMap[inv.opportunity] = (allocationMap[inv.opportunity] || 0) + inv.amount;
+                });
+
+                new Chart(document.getElementById('allocationChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(allocationMap),
+                        datasets: [{
+                            data: Object.values(allocationMap),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                        }]
+                    },
+                });
+
+                // Fake performance trend
+                new Chart(document.getElementById('performanceChart'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                        datasets: [{
+                            label: 'Portfolio Value',
+                            data: [1000, 3000, 5000, totalInvested / 2, totalInvested * 0.8, totalInvested],
+                            borderColor: '#3b82f6',
+                            fill: false,
+                        }]
+                    },
+                });
+
+                // Bar chart distribution
+                new Chart(document.getElementById('barChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: investments.map(inv => inv.opportunity),
+                        datasets: [{
+                            label: 'Amount ($)',
+                            data: investments.map(inv => inv.amount),
+                            backgroundColor: '#10b981',
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        }
+
+
+
+
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>

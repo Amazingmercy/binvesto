@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Binvesto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assests/style.css">
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-96">
+        <a href="/frontend/index.html" class="text-2xl font-bold mb-6">Binvesto </a>
+        <h2 class="text-2xl font-bold text-center text-blue-600 mb-6">Login</h2>
+        <h6 style="text-align: center; font-style: italic;">Use any email and password</h6>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium">Email</label>
+                <input type="email" id="email" required
+                    class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:text-white">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium">Password</label>
+                <input type="password" id="password" required
+                    class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:text-white">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
+                Login
+            </button>
+        </form>
+
+        <p class="text-sm text-gray-600 dark:text-gray-300 mt-4 text-center">
+            Don’t have an account? <a href="#" class="text-blue-500 hover:underline">Sign up</a>
+        </p>
+    </div>
+
+    <script>
+        // Reusable custom alert
+        function customAlert(message, type = "info") {
+            const alertBox = document.createElement("div");
+            alertBox.className = `fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white z-50
+      ${type === "success" ? "bg-green-600" : ""}
+      ${type === "error" ? "bg-red-600" : ""}
+      ${type === "info" ? "bg-blue-600" : ""}`;
+
+            alertBox.textContent = message;
+
+            document.body.appendChild(alertBox);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                alertBox.remove();
+            }, 3000);
+        }
+
+        document.getElementById("loginForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!email || !password) {
+                customAlert("Please fill in all fields!", "error");
+                return;
+            }
+
+            // ✅ Normally you’d send this to the backend API
+            // Simulating a successful login
+            const fakeToken = "fake-jwt-token-" + new Date().getTime();
+
+            // Store token in localStorage
+            localStorage.setItem("authToken", fakeToken);
+            localStorage.setItem("userEmail", email);
+
+            customAlert("Login successful!", "success");
+
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = "/frontend/dashboard.html";
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>
