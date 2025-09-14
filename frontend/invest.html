@@ -169,6 +169,19 @@
         return;
       }
 
+      // Load wallet balance
+      let walletBalance = parseFloat(localStorage.getItem("walletBalance")) || 0;
+
+      // Check if user has enough balance
+      if (amount > walletBalance) {
+        customAlert("Insufficient wallet balance. Please fund your wallet first.", "error");
+        return;
+      }
+
+      // Deduct from wallet
+      walletBalance -= amount;
+      localStorage.setItem("walletBalance", walletBalance);
+
       // Load existing investments
       let investments = JSON.parse(localStorage.getItem("investments")) || [];
 
@@ -187,11 +200,12 @@
       totalInvested += amount;
       localStorage.setItem("totalInvested", totalInvested);
 
-      customAlert(`Investment successful! Total invested so far: ₦${totalInvested}`, "success");
+      customAlert(`Investment successful! You invested ₦${amount}. Remaining balance: ₦${walletBalance}`, "success");
 
       this.reset();
       document.getElementById("opportunityDetails").classList.add("hidden");
     });
+
 
   </script>
 </body>
